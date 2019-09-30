@@ -55,8 +55,8 @@ type hostMessage struct {
 	SecretKey   string `json:"secretKey,omitempty"`
 	API         string `json:"api,omitempty"`
 	Lookup      string `json:"lookup,omitempty"`
-	Cert        string `json:"cert"`
-	Key         string `json:"key"`
+	Cert        string `json:"cert,omitempty"`
+	Key         string `json:"key,omitempty"`
 }
 
 // Print the config information of one alias, when prettyPrint flag
