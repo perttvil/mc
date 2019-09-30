@@ -37,7 +37,7 @@ import (
 
 	"github.com/minio/mc/pkg/httptracer"
 	"github.com/minio/mc/pkg/probe"
-	minio "github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/credentials"
 	"github.com/minio/minio-go/v6/pkg/encrypt"
 	"github.com/minio/minio-go/v6/pkg/policy"
@@ -178,6 +178,39 @@ func newFactory() func(config *Config) (Client, *probe.Error) {
 				if config.Insecure {
 					tlsConfig.InsecureSkipVerify = true
 				}
+
+				// If client side certificate and key are specified in config.json, read the certificates
+				// and add them to TLS config for client side certificate authentication.
+				if len(config.Cert) > 0 && len(config.Key) > 0 {
+					configFile, _ := getMcConfigPath()
+
+					var certFile = ""
+					var keyFile = ""
+
+					if filepath.IsAbs(config.Cert) {
+						certFile = filepath.Clean(config.Cert)
+					} else {
+						// Read certificate path relative to config file'
+						certFile = filepath.Join(filepath.Dir(configFile), config.Cert)
+					}
+
+					if filepath.IsAbs(config.Key) {
+						keyFile = filepath.Clean(config.Key)
+					} else {
+						// Read certificate path relative to config file'
+						keyFile = filepath.Join(filepath.Dir(configFile), config.Key)
+					}
+
+					clientSideCertificate, err := tls.LoadX509KeyPair(certFile, keyFile)
+
+					if err != nil {
+						msg := "Failed to read client side certificate files from '" + certFile + "' and '" + keyFile + "'"
+						return nil, probe.NewError(error(errors.New(msg)))
+					}
+
+					tlsConfig.Certificates = []tls.Certificate{clientSideCertificate}
+				}
+
 				tr.TLSClientConfig = tlsConfig
 
 				// Because we create a custom TLSClientConfig, we have to opt-in to HTTP/2.

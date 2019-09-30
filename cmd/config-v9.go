@@ -42,6 +42,8 @@ type hostConfigV9 struct {
 	SecretKey string `json:"secretKey"`
 	API       string `json:"api"`
 	Lookup    string `json:"lookup"`
+	Cert      string `json:"cert,omitempty"`
+	Key       string `json:"key,omitempty"`
 }
 
 // configV8 config version.

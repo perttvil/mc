@@ -10,3 +10,8 @@ prime/
 stage/
 mc
 .run*
+mirror.sh
+add.sh
+build.sh
+watch.sh
+mcsync

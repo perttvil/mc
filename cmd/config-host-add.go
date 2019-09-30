@@ -49,7 +49,7 @@ var configHostAddCmd = cli.Command{
   {{.HelpName}} - {{.Usage}}
 
 USAGE:
-  {{.HelpName}} ALIAS URL ACCESSKEY SECRETKEY
+  {{.HelpName}} ALIAS URL ACCESSKEY SECRETKEY Cert Key
 
 FLAGS:
   {{range .VisibleFlags}}{{.}}
@@ -78,7 +78,7 @@ EXAMPLES:
 func checkConfigHostAddSyntax(ctx *cli.Context) {
 	args := ctx.Args()
 	argsNr := len(args)
-	if argsNr < 4 || argsNr > 5 {
+	if argsNr < 4 || argsNr > 7 {
 		fatalIf(errInvalidArgument().Trace(ctx.Args().Tail()...),
 			"Incorrect number of arguments for host add command.")
 	}
@@ -137,12 +137,14 @@ func addHost(alias string, hostCfgV9 hostConfigV9) {
 		SecretKey: hostCfgV9.SecretKey,
 		API:       hostCfgV9.API,
 		Lookup:    hostCfgV9.Lookup,
+		Cert:      hostCfgV9.Cert,
+		Key:       hostCfgV9.Key,
 	})
 }
 
 // probeS3Signature - auto probe S3 server signature: issue a Stat call
 // using v4 signature then v2 in case of failure.
-func probeS3Signature(accessKey, secretKey, url string) (string, *probe.Error) {
+func probeS3Signature(accessKey, secretKey, url, cert, key string) (string, *probe.Error) {
 	probeBucketName := randString(60, rand.NewSource(time.Now().UnixNano()), "probe-bucket-sign-")
 	// Test s3 connection for API auto probe
 	s3Config := &Config{
@@ -152,6 +154,8 @@ func probeS3Signature(accessKey, secretKey, url string) (string, *probe.Error) {
 		SecretKey: secretKey,
 		Signature: "s3v4",
 		HostURL:   urlJoinPath(url, probeBucketName),
+		Cert:      cert,
+		Key:       key,
 	}
 
 	s3Client, err := s3New(s3Config)
@@ -186,13 +190,15 @@ func probeS3Signature(accessKey, secretKey, url string) (string, *probe.Error) {
 
 // buildS3Config constructs an S3 Config and does
 // signature auto-probe when needed.
-func buildS3Config(url, accessKey, secretKey, api, lookup string) (*Config, *probe.Error) {
+func buildS3Config(url, accessKey, secretKey, api, lookup, cert, key string) (*Config, *probe.Error) {
 
 	s3Config := newS3Config(url, &hostConfigV9{
 		AccessKey: accessKey,
 		SecretKey: secretKey,
 		URL:       url,
 		Lookup:    lookup,
+		Cert:      cert,
+		Key:       key,
 	})
 
 	// If api is provided we do not auto probe signature, this is
@@ -202,7 +208,7 @@ func buildS3Config(url, accessKey, secretKey, api, lookup string) (*Config, *pro
 		return s3Config, nil
 	}
 	// Probe S3 signature version
-	api, err := probeS3Signature(accessKey, secretKey, url)
+	api, err := probeS3Signature(accessKey, secretKey, url, cert, key)
 	if err != nil {
 		return nil, err.Trace(url, accessKey, secretKey, api, lookup)
 	}
@@ -223,9 +229,11 @@ func mainConfigHostAdd(ctx *cli.Context) error {
 		secretKey = args.Get(3)
 		api       = ctx.String("api")
 		lookup    = ctx.String("lookup")
+		cert      = args.Get(4)
+		key       = args.Get(5)
 	)
 
-	s3Config, err := buildS3Config(url, accessKey, secretKey, api, lookup)
+	s3Config, err := buildS3Config(url, accessKey, secretKey, api, lookup, cert, key)
 	fatalIf(err.Trace(ctx.Args()...), "Unable to initialize new config from the provided credentials.")
 
 	addHost(ctx.Args().Get(0), hostConfigV9{
@@ -234,6 +242,8 @@ func mainConfigHostAdd(ctx *cli.Context) error {
 		SecretKey: s3Config.SecretKey,
 		API:       s3Config.Signature,
 		Lookup:    lookup,
+		Cert:      s3Config.Cert,
+		Key:       s3Config.Key,
 	}) // Add a host with specified credentials.
 	return nil
 }

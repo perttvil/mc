@@ -55,6 +55,8 @@ type hostMessage struct {
 	SecretKey   string `json:"secretKey,omitempty"`
 	API         string `json:"api,omitempty"`
 	Lookup      string `json:"lookup,omitempty"`
+	Cert        string `json:"cert"`
+	Key         string `json:"key"`
 }
 
 // Print the config information of one alias, when prettyPrint flag
@@ -71,8 +73,10 @@ func (h hostMessage) String() string {
 			Row{"SecretKey", "SecretKey"},
 			Row{"API", "API"},
 			Row{"Lookup", "Lookup"},
+			Row{"Cert", "Cert"},
+			Row{"Key", "Key"},
 		)
-		return t.buildRecord(h.Alias, h.URL, h.AccessKey, h.SecretKey, h.API, h.Lookup)
+		return t.buildRecord(h.Alias, h.URL, h.AccessKey, h.SecretKey, h.API, h.Lookup, h.Cert, h.Key)
 	case "remove":
 		return console.Colorize("HostMessage", "Removed `"+h.Alias+"` successfully.")
 	case "add":

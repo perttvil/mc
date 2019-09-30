@@ -78,6 +78,8 @@ func mainConfigHostList(ctx *cli.Context) error {
 	console.SetColor("SecretKey", color.New(color.FgCyan))
 	console.SetColor("API", color.New(color.FgBlue))
 	console.SetColor("Lookup", color.New(color.FgCyan))
+	console.SetColor("Cert", color.New(color.FgCyan))
+	console.SetColor("Key", color.New(color.FgCyan))
 
 	args := ctx.Args()
 	listHosts(args.Get(0)) // List all configured hosts.
@@ -121,6 +123,22 @@ func listHosts(alias string) {
 	// If specific alias is requested, look for it and print.
 	if alias != "" {
 		if v, ok := conf.Hosts[alias]; ok {
+			fmt.Println(alias)
+			fmt.Println(v)
+			fmt.Println(v.Key)
+			fmt.Println(v.Cert)
+			fmt.Println(hostMessage{
+				op:          "list",
+				prettyPrint: false,
+				Alias:       alias,
+				URL:         v.URL,
+				AccessKey:   v.AccessKey,
+				SecretKey:   v.SecretKey,
+				API:         v.API,
+				Lookup:      v.Lookup,
+				Cert:        v.Cert,
+				Key:         v.Key,
+			})
 			printHosts(hostMessage{
 				op:          "list",
 				prettyPrint: false,
@@ -130,6 +148,8 @@ func listHosts(alias string) {
 				SecretKey:   v.SecretKey,
 				API:         v.API,
 				Lookup:      v.Lookup,
+				Cert:        v.Cert,
+				Key:         v.Key,
 			})
 			return
 		}
@@ -147,6 +167,8 @@ func listHosts(alias string) {
 			SecretKey:   v.SecretKey,
 			API:         v.API,
 			Lookup:      v.Lookup,
+			Cert:        v.Cert,
+			Key:         v.Key,
 		})
 	}
 

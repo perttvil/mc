@@ -106,6 +106,8 @@ type Config struct {
 	Debug       bool
 	Insecure    bool
 	Lookup      minio.BucketLookupType
+	Cert        string
+	Key         string
 }
 
 // SelectObjectOpts - opts entered for select API
